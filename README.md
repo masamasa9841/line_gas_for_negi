@@ -9,7 +9,7 @@
 ## Todo
 * Setting project property
   * SLACK_API
-  * CHANNEL_ACCESS_TOKEN
+  * CHANNEL_ACCESS_TOKEN of LINE
 
 ## License
 
