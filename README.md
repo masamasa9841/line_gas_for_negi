@@ -7,9 +7,15 @@
   * Ver: 22
 
 ## Todo
+
 * Setting project property
-  * SLACK_API
-  * CHANNEL_ACCESS_TOKEN of LINE
+  * [コード.gs](./コード.gs)
+    * SLACK_API (of Slack)
+    * CHANNEL_ACCESS_TOKEN (of LINE)
+  * [send_line_for_slack.gs](send_line_for_slack.gs)
+    * SLACK_API (of Slack)
+    * CHANNEL_ACCESS_TOKEN (of LINE)
+    * USER_ID (of LINE)
 
 ## License
 
