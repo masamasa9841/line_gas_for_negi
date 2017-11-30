@@ -1,56 +1,79 @@
 // Webhook for LINE
-function doPost(e) {  
+function doPost(e) {
+  var token = PropertiesService.getScriptProperties().getProperty('CHANNEL_ACCESS_TOKEN'); 
   var reply_token= JSON.parse(e.postData.contents).events[0].replyToken;
   var user_id= JSON.parse(e.postData.contents).events[0].source.userId;
-  var user_name = get_profile(user_id);
-  var user_message = JSON.parse(e.postData.contents).events[0].message.text;
-  postSlackMessage('LINE: ' + user_name + ' ```message: ' + user_message + '```');  
-  
-  
-  var add_friend = JSON.parse(e.contentLength);
-  
-  //友達追加された時の動作
-  if (add_friend == 174){
-    var friend_id = JSON.parse(e.postData.contents).events[0].source.userId;
-    var send_mes = "友達が追加されました" + friend_id; 
-    postSlackMessage(send_mes);
+  var group_id= JSON.parse(e.postData.contents).events[0].source.groupId;
+  if (user_id != undefined ) {
+    var profile = get_profile(user_id);
   }
-  //メッセージに元気と含まれていたら、元気ですと返す
-  var token = PropertiesService.getScriptProperties().getProperty('CHANNEL_ACCESS_TOKEN'); 
-  if ( user_message.indexOf('元気') != -1 ) {
-    var user_message2 = "元気";
-    var bot_message = "BOT...(" + user_message2 + ")";
-    postSlackMessage(bot_message); 
-    var url = 'https://api.line.me/v2/bot/message/reply';
-    UrlFetchApp.fetch(url, {
-      'headers': {
-        'Content-Type': 'application/json; charset=UTF-8',
-        'Authorization': 'Bearer ' + token,
-      },
-      'method': 'post',
-      'payload': JSON.stringify({
-        'replyToken': reply_token,
-        'messages': [{
-          'type': 'text',
-          'text': user_message2,
-        }],
-      }),
-    });
-  } else{
-    postSlackMessage('元気以外が送信された'); 
+  switch (JSON.parse(e.postData.contents).events[0].type) {
+    case 'follow': // follow event
+      postSlackMessage('Followed', profile['displayName'] ,profile['pictureUrl']);
+      break;
+      
+    case 'unfollow': //unfollo event
+      postSlackMessage('Unollowed', profile['displayName'] ,profile['pictureUrl']);
+      break; 
+      
+    case 'join': //join event
+      postSlackMessage('Join group: ' + group_id);
+      break; 
+      
+    case 'leave': //leave event
+      postSlackMessage('Leave group: ' +  group_id);
+      break; 
+      
+    case 'message': //message event
+      var user_message = JSON.parse(e.postData.contents).events[0].message.text;
+      postSlackMessage(user_message, profile['displayName'] ,profile['pictureUrl']);
+      
+      if ( user_message.indexOf('元気') != -1 ) {
+        var bot_message = "元気です";
+        postSlackMessage(bot_message); 
+        var url = 'https://api.line.me/v2/bot/message/reply';
+        UrlFetchApp.fetch(url, {
+          'headers': {
+            'Content-Type': 'application/json; charset=UTF-8',
+            'Authorization': 'Bearer ' + token,
+          },
+          'method': 'post',
+          'payload': JSON.stringify({
+            'replyToken': reply_token,
+            'messages': [{
+              'type': 'text',
+              'text': bot_message,
+            }],
+          }),
+        });
+      } else{
+        // 指定文章以外をこ↑こ↓に書く
+      }    
+      
+    default:
+      break;
   }
+  
 }
 
-// Slack
-function postSlackMessage(mes) {
+// Send Slack
+function postSlackMessage(mes, name, image_url) {
   var token = PropertiesService.getScriptProperties().getProperty('SLACK_API'); 
   var slackApp = SlackApp.create(token);
+  if (name == undefined){
+    name = 'LINE_BOT';
+  }
   var options = {
     channelId: "#random",
-    userName: "LINE_BOT",
-    message: mes
+    userName: name,
+    message: mes,
+    url: image_url
   };
-  slackApp.postMessage(options.channelId, options.message, {username: options.userName});
+  if (image_url == undefined){
+    slackApp.postMessage(options.channelId, options.message, {username: options.userName});
+  } else {
+    slackApp.postMessage(options.channelId, options.message, {username: options.userName, icon_url: options.url});
+  }
 }
 
 // Get Profile for LINE
@@ -65,5 +88,5 @@ function get_profile(userid) {
   };
   var response = UrlFetchApp.fetch(url, options);
   var content = JSON.parse(response.getContentText());  
-  return content['displayName'];  
+  return content;  
 }
