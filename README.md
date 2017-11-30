@@ -1,0 +1,1 @@
+# line_gas_for_negi
